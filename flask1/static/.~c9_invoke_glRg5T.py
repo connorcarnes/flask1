@@ -1,6 +1,5 @@
 import os
 import secrets
-import json
 from PIL import Image
 from flask import render_template, url_for, flash, redirect, request, abort
 from flask1 import app, db, bcrypt
@@ -12,8 +11,7 @@ from flask_login import login_user, current_user, logout_user, login_required
 @app.route("/")     # example of multiple routes
 @app.route("/home") # example of multiple routes
 def home():
-    page = request.args.get('page', 1, type=int)
-    posts = Post.query.order_by(Post.date_posted.desc()).paginate(page=page,per_page=5)
+    posts = Post.query.all()
     return render_template('home.html', posts=posts)
     
     
@@ -144,41 +142,44 @@ def delete_post(post_id):
     db.session.commit()
     flash('Your post has been deleted!', 'success')
     return redirect(url_for('home'))
-    
-    
-@app.route("/user/<string:username>")
-def user_posts(username):
-    page = request.args.get('page', 1, type=int)
-    user = User.query.filter_by(username=username).first_or_404()
-    posts = Post.query.filter_by(author=user)\
-        .order_by(Post.date_posted.desc())\
-        .paginate(page=page, per_page=5)
-    return render_template('user_posts.html', posts=posts, user=user)
-    
 
 
 
 
 
 
-# To add dummy data/blogposts
-# https://www.pastery.net/xgngyy/
+
+
 # put this in your routes.py
 # then add "import json" in routes.py
 # save the json in static folder with the name "posts.json"
+ 4
 # then got to localhost:5000/debug_add_posts
+ 5
 # warning: make sure you already have 2 users before doing this!
+ 6
 @app.route("/debug_add_posts")
+ 7
 def debug_add_post():
+ 8
     json_path = os.path.join(app.root_path, 'static', 'posts.json')
+ 9
     with open(json_path) as json_file:
+10
         data = json.load(json_file)
+11
         for post_data in data:
+12
             author = User.query.get(post_data['user_id'])
+13
             post = Post(title=post_data['title'], content=post_data['content'], author=author)
+14
             db.session.add(post)
+15
             db.session.commit()
+16
     flash("Posts have been added!", "success")
+17
     return redirect(url_for('home'))
     
     
